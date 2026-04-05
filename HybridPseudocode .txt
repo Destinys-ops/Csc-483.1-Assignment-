@@ -1,0 +1,53 @@
+CLASS HybridProductCatalog:
+    
+    DATA STRUCTURES:
+        products: Array of Product (sorted by ID)
+        nameIndex: HashMap<String, List<Integer>>  // name -> list of indices
+        size: Integer
+    
+    METHOD addProduct(newProduct):
+        // Find insertion point to maintain sorted order by ID
+        insertionPoint = binarySearchInsertionPoint(products, newProduct.productId)
+        
+        // Shift elements and insert
+        shiftArrayRight(products, insertionPoint)
+        products[insertionPoint] = newProduct
+        size++
+        
+        // Update name index
+        name = newProduct.productName.toLowerCase()
+        IF name NOT IN nameIndex:
+            nameIndex[name] = new ArrayList()
+        nameIndex[name].add(insertionPoint)
+        
+        // Rebuild indices after insertion (or use tree-based index)
+        rebuildIndices(insertionPoint)
+        
+        RETURN true
+    
+    METHOD searchById(targetId):
+        // Standard binary search on sorted array
+        RETURN binarySearch(products, targetId)
+        // Time: O(log n)
+    
+    METHOD searchByName(targetName):
+        // O(1) hash lookup, then O(k) to retrieve products
+        // where k = number of matches (usually small)
+        indices = nameIndex.get(targetName.toLowerCase())
+        IF indices is NULL:
+            RETURN empty list
+        
+        results = new List()
+        FOR each index IN indices:
+            results.add(products[index])
+        RETURN results
+        // Time: O(1) average for lookup + O(k) retrieval
+    
+    METHOD searchByNamePartial(partialName):
+        // For partial matches, use Trie or iterate through keys
+        matches = new List()
+        FOR each name IN nameIndex.keys():
+            IF name.contains(partialName.toLowerCase()):
+                matches.addAll(getProductsByName(name))
+        RETURN matches
+        // Time: O(m) where m = number of unique names
